@@ -1,35 +1,53 @@
 # frozen_string_literal: true
 
-require_relative "rls/version"
-require_relative "rls/railtie"
 require_relative "rls/current"
+require_relative "rls/migration"
+require_relative "rls/railtie"
+require_relative "rls/version"
 
 module RLS
   class << self
-    def configure(&block)
-      block.call(configuration)
-    end
+    SET_CUSTOMER_ID_SQL = 'SET rls.tenant_id = %s'.freeze
+    RESET_CUSTOMER_ID_SQL = 'RESET rls.tenant_id'.freeze
 
     def connection
       ActiveRecord::Base.connection
     end
 
-    def configuration
-      Rails.application.config.rls
+    def role
+      "#{Rails.application.class.module_parent.to_s.underscore}_rls_#{Rails.env}"
     end
 
-    def process(tenant, &block)
+    def admin=(admin)
+      RLS::Current.admin = admin
+    end
+
+    def admin
+      RLS::Current.admin
+    end
+
+    def process(tenant_id, &block)
       raise "Please supply block" unless block_given?
 
-      old_tenant = RLS::Current.tenant
-      RLS::Current.tenant = tenant
+      if tenant_id.present?
+        set! tenant_id
+      else
+        reset!
+      end
+
       block.call
     ensure
-      RLS::Current.tenant = old_tenant
+      reset!
     end
 
-    def switch!(tenant)
-      RLS::Current.tenant = tenant
+    def set!(tenant_id)
+      connection.execute format(SET_CUSTOMER_ID_SQL, connection.quote(tenant_id))
     end
+
+    def reset!
+      connection.execute RESET_CUSTOMER_ID_SQL
+      connection.clear_query_cache
+    end
+
   end
 end
