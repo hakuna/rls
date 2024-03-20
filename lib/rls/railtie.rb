@@ -3,6 +3,8 @@
 require_relative "extensions/postgresql_adapter"
 require_relative "extensions/schema_dumper"
 
+require "active_record/connection_adapters/postgresql_adapter"
+
 module RLS
   class Railtie < Rails::Railtie
     config.to_prepare do
