@@ -7,6 +7,9 @@ require "active_record/connection_adapters/postgresql_adapter"
 
 module RLS
   class Railtie < Rails::Railtie
+    config.rls = ActiveSupport::OrderedOptions.new
+    config.rls.role = 'app_rls'
+
     config.to_prepare do
       ActiveRecord::ConnectionAdapters::PostgreSQLAdapter.prepend(RLS::Extensions::PostgreSQLAdapter)
       ActiveRecord::ConnectionAdapters::PostgreSQL::SchemaDumper.prepend(RLS::Extensions::SchemaDumper)
