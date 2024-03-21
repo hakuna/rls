@@ -3,13 +3,7 @@ module RLS
     module PostgreSQLAdapter
       def initialize(...)
         super
-
-        unless RLS.admin
-          puts "SET ROLE #{RLS.role}"
-          execute("SET ROLE #{RLS.role}")
-        else
-          puts "NO ROLE"
-        end
+        execute("SET ROLE #{RLS.role}") unless RLS.admin
       end
     end
   end

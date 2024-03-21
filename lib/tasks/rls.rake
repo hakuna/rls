@@ -35,6 +35,7 @@ namespace :rls do
     RLS.connection.execute <<~SQL
       REVOKE ALL ON ALL TABLES IN SCHEMA public FROM "#{RLS.role}";
       REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM "#{RLS.role}";
+      DROP OWNED BY "#{RLS.role}";
       DROP ROLE "#{RLS.role}";
     SQL
 
