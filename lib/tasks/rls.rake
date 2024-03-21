@@ -3,23 +3,21 @@
 load_config_task = Rake::Task['db:load_config']
 
 # before task
-load_config_task.enhance(['rls:enable_admin'])
+load_config_task.enhance(['rls:disable_rls_role'])
 
 # after task
 load_config_task.enhance do
-  load_config_task.enhance(['rls:disable_admin'])
+  Rake::Task['rls:enable_rls_role'].invoke
 end
 
 namespace :rls do
-  task enable_admin: :environment do
-    RLS.admin = true
-    ActiveRecord::Base.clear_all_connections!
-    ActiveRecord::Base.establish_connection
+  task disable_rls_role: :environment do
+    connection = ActiveRecord::Base.connection
+    connection.disable_rls_role!
   end
 
-  task disable_admin: :environment do
-    RLS.admin = true
-    ActiveRecord::Base.clear_all_connections!
-    ActiveRecord::Base.establish_connection
+  task enable_rls_role: :environment do
+    connection = ActiveRecord::Base.connection
+    connection.enable_rls_role!
   end
 end

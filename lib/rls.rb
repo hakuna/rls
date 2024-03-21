@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "rls/current"
 require_relative "rls/migration"
 require_relative "rls/railtie"
 require_relative "rls/version"
@@ -16,14 +15,6 @@ module RLS
 
     def role
       "#{Rails.application.class.module_parent.to_s.underscore}_rls_#{Rails.env}"
-    end
-
-    def admin=(admin)
-      RLS::Current.admin = admin
-    end
-
-    def admin
-      RLS::Current.admin
     end
 
     def process(tenant_id, &block)

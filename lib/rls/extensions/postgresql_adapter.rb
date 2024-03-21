@@ -3,7 +3,15 @@ module RLS
     module PostgreSQLAdapter
       def initialize(...)
         super
-        execute("SET ROLE #{RLS.role}") unless RLS.admin
+        enable_rls_role!
+      end
+
+      def enable_rls_role!
+        execute("SET ROLE #{RLS.role}")
+      end
+
+      def disable_rls_role!
+        execute("RESET ROLE")
       end
     end
   end
