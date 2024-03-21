@@ -22,6 +22,8 @@ namespace :rls do
       CREATE ROLE "#{RLS.role}" WITH NOLOGIN;
       GRANT ALL ON ALL TABLES IN SCHEMA public TO "#{RLS.role}";
       GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO "#{RLS.role}";
+      ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "#{RLS.role}";
+      ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "#{RLS.role}";
     SQL
 
     puts "Role #{RLS.role} created"
@@ -33,6 +35,8 @@ namespace :rls do
     RLS.disable_rls_role!
 
     RLS.connection.execute <<~SQL
+      ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM "#{RLS.role}";
+      ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON SEQUENCES FROM "#{RLS.role}";
       REVOKE ALL ON ALL TABLES IN SCHEMA public FROM "#{RLS.role}";
       REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM "#{RLS.role}";
       DROP OWNED BY "#{RLS.role}";
