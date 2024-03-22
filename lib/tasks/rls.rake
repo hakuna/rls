@@ -1,22 +1,32 @@
 # frozen_string_literal: true
 
-Rake::Task['db:load_config'].enhance(['rls:disable_rls_role'])
+# disable before
+Rake::Task['db:load_config'].enhance(['rls:disable'])
+
+# enable after
+Rake::Task.tasks.each do |task|
+  if task.prerequisites.any? { |pre| pre == 'db:load_config' || (pre == 'load_config' && task.name.start_with?('db:')) }
+    task.enhance do
+      Rake::Task['rls:enable'].invoke
+    end
+  end
+end
 
 namespace :rls do
   def connection
     @connection ||= RLS.connection
   end
 
-  task disable_rls_role: :environment do
-    RLS.disable_rls_role!
+  task disable: :environment do
+    RLS.disable!
   end
 
-  task enable_rls_role: :environment do
-    RLS.enable_rls_role!
+  task enable: :environment do
+    RLS.enable!
   end
 
   task create_role: :environment do
-    RLS.disable_rls_role!
+    RLS.disable!
 
     RLS.connection.execute <<~SQL
       CREATE ROLE "#{RLS.role}" WITH NOLOGIN;
@@ -28,11 +38,11 @@ namespace :rls do
 
     puts "Role #{RLS.role} created"
 
-    RLS.enable_rls_role!
+    RLS.enable!
   end
 
   task drop_role: :environment do
-    RLS.disable_rls_role!
+    RLS.disable!
 
     RLS.connection.execute <<~SQL
       ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM "#{RLS.role}";
@@ -45,7 +55,7 @@ namespace :rls do
 
     puts "Role #{RLS.role} dropped"
 
-    RLS.enable_rls_role!
+    RLS.enable!
   end
 
 end

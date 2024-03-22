@@ -22,10 +22,6 @@ module RLS
       Rails.application.config.rls
     end
 
-    def connection
-      ActiveRecord::Base.connection
-    end
-
     def role
       configuration.role
     end
@@ -38,12 +34,12 @@ module RLS
       RLS::Current.admin
     end
 
-    def disable_rls_role!
+    def disable!
       self.admin = true
       ActiveRecord::Base.connection_pool.disconnect!
     end
 
-    def enable_rls_role!
+    def enable!
       self.admin = false
       ActiveRecord::Base.connection_pool.disconnect!
     end
@@ -63,12 +59,11 @@ module RLS
     end
 
     def set!(tenant_id)
-      connection.execute format(SET_CUSTOMER_ID_SQL, connection.quote(tenant_id))
+      connection.rls_set(tenant_id:)
     end
 
     def reset!
-      connection.execute RESET_CUSTOMER_ID_SQL
-      connection.clear_query_cache
+      connection.rls_reset
     end
 
   end
