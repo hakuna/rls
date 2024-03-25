@@ -1,14 +1,20 @@
 # frozen_string_literal: true
 
-# disable before
-Rake::Task['db:load_config'].enhance(['rls:disable'])
+Rake.application.top_level_tasks.each do |task_name|
+  next unless task_name.start_with?('db:')
 
-# enable after
-Rake::Task.tasks.each do |task|
-  if task.prerequisites.any? { |pre| pre == 'db:load_config' || (pre == 'load_config' && task.name.start_with?('db:')) }
-    task.enhance do
-      Rake::Task['rls:enable'].invoke
-    end
+  # disable RLS role before running the task
+  Rake::Task[task_name].enhance(['rls:disable'])
+
+  # enable RLS role after running the task
+  Rake::Task[task_name].enhance do
+    Rake::Task['rls:enable'].invoke
+  end
+
+  # make sure they run again if multiple tasks are run
+  Rake::Task[task_name].enhance do
+    Rake::Task['rls:enable'].reenable
+    Rake::Task['rls:disable'].reenable
   end
 end
 
@@ -29,7 +35,15 @@ namespace :rls do
     RLS.disable!
 
     RLS.connection.execute <<~SQL
-      CREATE ROLE "#{RLS.role}" WITH NOLOGIN;
+      DO $$
+      BEGIN
+        CREATE ROLE "#{RLS.role}" WITH NOLOGIN;
+      EXCEPTION
+        WHEN DUPLICATE_OBJECT THEN
+          RAISE NOTICE 'Role "#{RLS.role}" already exists';
+      END
+      $$;
+
       GRANT ALL ON ALL TABLES IN SCHEMA public TO "#{RLS.role}";
       GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO "#{RLS.role}";
       ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "#{RLS.role}";
