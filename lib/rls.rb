@@ -31,16 +31,16 @@ module RLS
     end
 
     def admin
-      RLS::Current.admin
-    end
-
-    def disable!
-      self.admin = true
-      ActiveRecord::Base.connection_pool.disconnect!
+      !!RLS::Current.admin
     end
 
     def enable!
       self.admin = false
+      ActiveRecord::Base.connection_pool.disconnect!
+    end
+
+    def disable!
+      self.admin = true
       ActiveRecord::Base.connection_pool.disconnect!
     end
 
