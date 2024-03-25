@@ -6,183 +6,55 @@ require "rake"
 Rails.application.load_tasks
 
 RSpec.describe "rake tasks" do
-  before do
-    allow(RLS.configuration).to receive(:tenants).and_return(%w[acme foo-inc star])
-  end
-
-  describe "rls:create" do
-    subject { -> { capture_rake_task_output("rls:create") } }
-
-    before do
-      allow(RLS).to receive(:exists?).and_return(false)
-      # acme already exists
-      allow(RLS).to receive(:exists?).with("acme").and_return(true)
-    end
+  describe "rls:enable" do
+    subject { -> { capture_rake_task_output("rls:enable") } }
 
     specify do
-      expect(RLS).to receive(:create).with("foo-inc")
-      expect(RLS).to receive(:create).with("star")
-      expect(RLS).not_to receive(:create).with("acme")
+      expect(RLS).to receive(:enable!)
       subject.call
     end
   end
 
-  describe "rls:drop" do
-    subject { -> { capture_rake_task_output("rls:drop") } }
-
-    before do
-      allow(RLS).to receive(:exists?).and_return(false)
-      # acme already exists
-      allow(RLS).to receive(:exists?).with("acme").and_return(true)
-    end
+  describe "rls:disable" do
+    subject { -> { capture_rake_task_output("rls:disable") } }
 
     specify do
-      expect(RLS).not_to receive(:drop).with("foo-inc")
-      expect(RLS).not_to receive(:drop).with("star")
-      expect(RLS).to receive(:drop).with("acme")
+      expect(RLS).to receive(:disable!)
       subject.call
     end
   end
 
-  describe "rls:migrate" do
-    subject { -> { capture_rake_task_output("rls:migrate") } }
-
-    before do
-      allow(RLS).to receive(:exists?).and_return(false)
-      # acme exists
-      allow(RLS).to receive(:exists?).with("acme").and_return(true)
-    end
+  describe "rls:create_role" do
+    subject { -> { capture_rake_task_output("rls:create_role") } }
 
     specify do
-      expect(ActiveRecord::Tasks::DatabaseTasks).to receive(:migrate) do
-        expect(RLS.current_tenant).to eq "acme"
-      end
-
+      expect(RLS).to receive(:disable!).ordered
+      expect(RLS.connection).to receive(:execute).with(/CREATE ROLE "app_rls"/).ordered
+      expect(RLS).to receive(:enable!).ordered
       subject.call
     end
   end
 
-  describe "rls:seed" do
-    subject { -> { capture_rake_task_output("rls:seed") } }
-
-    before do
-      allow(RLS).to receive(:exists?).and_return(false)
-
-      allow(RLS).to receive(:exists?).with("acme").and_return(true)
-      allow(RLS).to receive(:exists?).with("star").and_return(true)
-    end
+  describe "rls:drop_role" do
+    subject { -> { capture_rake_task_output("rls:drop_role") } }
 
     specify do
-      expect(RLS).not_to receive(:seed).with("foo-inc")
-      expect(RLS).to receive(:seed).with("star")
-      expect(RLS).to receive(:seed).with("acme")
-
+      expect(RLS).to receive(:disable!).ordered
+      expect(RLS.connection).to receive(:execute).with(/DROP ROLE "app_rls"/).ordered
+      expect(RLS).to receive(:enable!).ordered
       subject.call
     end
   end
 
-  describe "rls:rollback" do
-    subject { -> { capture_rake_task_output("rls:rollback") } }
-
-    let(:conn) { double }
-    let(:migration_context) { double }
-
-    before do
-      allow(RLS).to receive(:exists?).and_return(false)
-
-      allow(RLS).to receive(:exists?).with("acme").and_return(true)
-      allow(RLS).to receive(:exists?).with("star").and_return(true)
-
-      allow(ActiveRecord::Base).to receive(:connection).and_return(conn)
-      allow(conn).to receive(:migration_context).and_return(migration_context)
-    end
-
-    specify do
-      expect(migration_context).to receive(:rollback).twice do
-        expect(RLS.current_tenant).to be_in %w[acme star]
-      end
-
-      subject.call
-    end
-
-    context "with STEP given" do
-      before { ENV["STEP"] = "42" }
+  describe "db:* tasks, such as db:migrate" do
+    describe do
+      subject { -> { capture_rake_task_output("db:migrate") } }
 
       specify do
-        expect(migration_context).to receive(:rollback).with(42).twice
+        expect(RLS).to receive(:disable!).ordered.and_call_original
+        expect(RLS).to receive(:enable!).ordered.and_call_original
         subject.call
       end
-    end
-  end
-
-  describe "rls:migrate:up" do
-    let(:conn) { double }
-    let(:migration_context) { double }
-
-    before do
-      allow(RLS).to receive(:exists?).and_return(false)
-
-      allow(RLS).to receive(:exists?).with("acme").and_return(true)
-      allow(RLS).to receive(:exists?).with("star").and_return(true)
-
-      allow(ActiveRecord::Base).to receive(:connection).and_return(conn)
-      allow(conn).to receive(:migration_context).and_return(migration_context)
-    end
-
-    describe "rls:migrate:up" do
-      subject { -> { capture_rake_task_output("rls:migrate:up") } }
-
-      specify do
-        expect(migration_context).to receive(:run).with(:up, nil).twice do
-          expect(RLS.current_tenant).to be_in %w[acme star]
-        end
-
-        subject.call
-      end
-
-      context "with VERSION given" do
-        before { stub_const("ENV", { "VERSION" => "20221003075254" }) }
-
-        specify do
-          expect(migration_context).to receive(:run).with(:up, 20_221_003_075_254).twice
-          subject.call
-        end
-      end
-    end
-
-    describe "rls:migrate:down" do
-      subject { -> { capture_rake_task_output("rls:migrate:down") } }
-
-      specify do
-        expect(migration_context).to receive(:run).with(:down, nil).twice do
-          expect(RLS.current_tenant).to be_in %w[acme star]
-        end
-
-        subject.call
-      end
-
-      context "with VERSION given" do
-        before { stub_const("ENV", { "VERSION" => "20221003075254" }) }
-
-        specify do
-          expect(migration_context).to receive(:run).with(:down, 20_221_003_075_254).twice
-          subject.call
-        end
-      end
-    end
-  end
-
-  context "with ENV['TENANT'] specified" do
-    subject { -> { capture_rake_task_output("rls:drop") } }
-
-    before { allow(RLS).to receive(:exists?).and_return(true) }
-    before { stub_const("ENV", { "TENANT" => "foo,bar" }) }
-
-    specify do
-      expect(RLS).to receive(:drop).with("foo")
-      expect(RLS).to receive(:drop).with("bar")
-
-      subject.call
     end
   end
 
