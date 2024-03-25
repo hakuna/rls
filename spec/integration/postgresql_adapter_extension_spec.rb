@@ -7,7 +7,7 @@ RSpec.describe "Postgresql adapter extension integration" do
 
   specify do
     role = connection.query_value("SHOW ROLE")
-    expect(role).to eq "app_rls"
+    expect(role).to eq "dummy_rls_test"
   end
 
   context "when admin" do

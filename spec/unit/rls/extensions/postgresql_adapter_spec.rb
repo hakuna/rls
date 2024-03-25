@@ -23,7 +23,7 @@ RSpec.describe RLS::Extensions::PostgreSQLAdapter do
 
   describe "#initialize" do
     it "sets the role" do
-      expect_any_instance_of(MyAdapter).to receive(:execute).with("SET ROLE 'app_rls'")
+      expect_any_instance_of(MyAdapter).to receive(:execute).with("SET ROLE 'dummy_rls_test'")
       connection # initialize
     end
 
@@ -31,7 +31,7 @@ RSpec.describe RLS::Extensions::PostgreSQLAdapter do
       before { RLS.admin = true }
 
       it "does not set the role" do
-        expect_any_instance_of(MyAdapter).not_to receive(:execute).with("SET ROLE 'app_rls'")
+        expect_any_instance_of(MyAdapter).not_to receive(:execute).with("SET ROLE 'dummy_rls_test'")
         connection # initialize
       end
     end

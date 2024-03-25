@@ -7,9 +7,6 @@ require "active_record/connection_adapters/postgresql_adapter"
 
 module RLS
   class Railtie < Rails::Railtie
-    config.rls = ActiveSupport::OrderedOptions.new
-    config.rls.role = "app_rls"
-
     config.to_prepare do
       ActiveRecord::ConnectionAdapters::PostgreSQLAdapter.prepend(RLS::Extensions::PostgreSQLAdapter)
       ActiveRecord::ConnectionAdapters::PostgreSQL::SchemaDumper.prepend(RLS::Extensions::SchemaDumper)
@@ -19,6 +16,11 @@ module RLS
       end
 
       ActiveRecord::Migration.include(RLS::Migration)
+    end
+
+    initializer "rls.configure" do |app|
+      app.config.rls = ActiveSupport::OrderedOptions.new
+      app.config.rls.role = "#{app.class.module_parent_name.underscore}_rls_#{Rails.env}"
     end
 
     rake_tasks do

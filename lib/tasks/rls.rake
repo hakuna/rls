@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-Rake.application.top_level_tasks.each do |task_name|
+Rake::Task.tasks.each do |task|
+  task_name = task.name
   next unless task_name.start_with?("db:")
 
   # disable RLS role before running the task

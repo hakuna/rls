@@ -27,7 +27,7 @@ RSpec.describe "rake tasks" do
 
     specify do
       expect(RLS).to receive(:disable!).ordered
-      expect(RLS.connection).to receive(:execute).with(/CREATE ROLE "app_rls"/).ordered
+      expect(RLS.connection).to receive(:execute).with(/CREATE ROLE "dummy_rls_test"/).ordered
       expect(RLS).to receive(:enable!).ordered
       subject.call
     end
@@ -38,7 +38,7 @@ RSpec.describe "rake tasks" do
 
     specify do
       expect(RLS).to receive(:disable!).ordered
-      expect(RLS.connection).to receive(:execute).with(/DROP ROLE "app_rls"/).ordered
+      expect(RLS.connection).to receive(:execute).with(/DROP ROLE "dummy_rls_test"/).ordered
       expect(RLS).to receive(:enable!).ordered
       subject.call
     end
