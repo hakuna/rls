@@ -1,10 +1,10 @@
 module RLS
   module Extensions
     module PostgreSQLAdapter
-      SET_ROLE_SQL = 'SET ROLE %s'.freeze
+      SET_ROLE_SQL = "SET ROLE %s".freeze
 
-      SET_TENANT_ID_SQL = 'SET rls.tenant_id = %s'.freeze
-      RESET_TENANT_ID_SQL = 'RESET rls.tenant_id'.freeze
+      SET_TENANT_ID_SQL = "SET rls.tenant_id = %s".freeze
+      RESET_TENANT_ID_SQL = "RESET rls.tenant_id".freeze
 
       def initialize(...)
         super

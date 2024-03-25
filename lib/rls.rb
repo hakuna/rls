@@ -7,8 +7,8 @@ require_relative "rls/version"
 
 module RLS
   class << self
-    SET_CUSTOMER_ID_SQL = 'SET rls.tenant_id = %s'.freeze
-    RESET_CUSTOMER_ID_SQL = 'RESET rls.tenant_id'.freeze
+    SET_CUSTOMER_ID_SQL = "SET rls.tenant_id = %s".freeze
+    RESET_CUSTOMER_ID_SQL = "RESET rls.tenant_id".freeze
 
     def configure(&block)
       block.call(configuration)
@@ -59,7 +59,7 @@ module RLS
     end
 
     def set!(tenant_id)
-      connection.rls_set(tenant_id:)
+      connection.rls_set(tenant_id: tenant_id)
     end
 
     def reset!

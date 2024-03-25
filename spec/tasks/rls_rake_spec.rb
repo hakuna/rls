@@ -63,7 +63,7 @@ RSpec.describe "rake tasks" do
       end
     end
 
-    context 'single task' do
+    context "single task" do
       let(:top_level_tasks) { ["db:migrate:status"] }
 
       subject { -> { run_and_capture_rake("db:migrate:status") } }
@@ -75,7 +75,7 @@ RSpec.describe "rake tasks" do
       end
     end
 
-    context 'multiple tasks' do
+    context "multiple tasks" do
       let(:top_level_tasks) { ["db:migrate", "db:version"] }
 
       subject { -> { run_and_capture_rake("db:migrate", "db:version") } }

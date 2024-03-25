@@ -1,20 +1,20 @@
 # frozen_string_literal: true
 
 Rake.application.top_level_tasks.each do |task_name|
-  next unless task_name.start_with?('db:')
+  next unless task_name.start_with?("db:")
 
   # disable RLS role before running the task
-  Rake::Task[task_name].enhance(['rls:disable'])
+  Rake::Task[task_name].enhance(["rls:disable"])
 
   # enable RLS role after running the task
   Rake::Task[task_name].enhance do
-    Rake::Task['rls:enable'].invoke
+    Rake::Task["rls:enable"].invoke
   end
 
   # make sure they run again if multiple tasks are run
   Rake::Task[task_name].enhance do
-    Rake::Task['rls:enable'].reenable
-    Rake::Task['rls:disable'].reenable
+    Rake::Task["rls:enable"].reenable
+    Rake::Task["rls:disable"].reenable
   end
 end
 

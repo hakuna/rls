@@ -10,7 +10,7 @@ RSpec.describe "Postgresql adapter extension integration" do
     expect(role).to eq "app_rls"
   end
 
-  context 'when admin' do
+  context "when admin" do
     specify do
       RLS.admin = true
       connection.disconnect!

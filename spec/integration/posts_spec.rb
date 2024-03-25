@@ -19,7 +19,8 @@ RSpec.describe "Posts", type: :request do
     get "/posts"
     expect(response.body).not_to include("ACME Post")
 
-    post "/posts", params: { post: { title: "New G-Virus", content: "This is classified information", tenant_id: umbrella_corp.id } }
+    post "/posts", 
+params: { post: { title: "New G-Virus", content: "This is classified information", tenant_id: umbrella_corp.id } }
     expect(response).to have_http_status(:found)
 
     get "/posts"
