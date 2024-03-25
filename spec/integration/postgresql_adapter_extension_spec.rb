@@ -13,7 +13,7 @@ RSpec.describe "Postgresql adapter extension integration" do
   context "when admin" do
     specify do
       RLS.admin = true
-      connection.disconnect!
+      ActiveRecord::Base.connection_pool.disconnect!
 
       role = connection.query_value("SHOW ROLE")
       expect(role).to eq "none"
