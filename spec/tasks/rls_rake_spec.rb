@@ -22,34 +22,25 @@ RSpec.describe "rake tasks" do
     end
   end
 
-  describe "setup role for dev/test env" do
-    before do
-      connection = double("Connection")
-      allow(ActiveRecord::Base).to receive(:connection).and_return(connection)
-      allow(connection).to receive(:execute)
-      allow(connection).to receive(:disconnect!)
+  describe "rls:create_role" do
+    subject { -> { run_and_capture_rake("rls:create_role") } }
+
+    specify do
+      expect(RLS).to receive(:disable!).ordered
+      expect(RLS.connection).to receive(:execute).with(/CREATE ROLE "dummy_rls_test"/).ordered
+      expect(RLS).to receive(:enable!).ordered
+      subject.call
     end
+  end
 
-    describe "rls:create_role" do
-      subject { -> { run_and_capture_rake("rls:create_role") } }
+  describe "rls:drop_role" do
+    subject { -> { run_and_capture_rake("rls:drop_role") } }
 
-      specify do
-        expect(RLS).to receive(:disable!).ordered
-        expect(connection).to receive(:execute).with(/CREATE ROLE "dummy_rls_test" WITH NOLOGIN/).ordered
-        expect(RLS).to receive(:enable!).ordered
-        subject.call
-      end
-    end
-
-    describe "rls:drop_role" do
-      subject { -> { run_and_capture_rake("rls:drop_role") } }
-
-      specify do
-        expect(RLS).to receive(:disable!).ordered
-        expect(connection).to receive(:execute).with(/DROP ROLE "dummy_rls_test"/).ordered
-        expect(RLS).to receive(:enable!).ordered
-        subject.call
-      end
+    specify do
+      expect(RLS).to receive(:disable!).ordered
+      expect(RLS.connection).to receive(:execute).with(/DROP ROLE "dummy_rls_test"/).ordered
+      expect(RLS).to receive(:enable!).ordered
+      subject.call
     end
   end
 
