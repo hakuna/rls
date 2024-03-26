@@ -45,10 +45,12 @@ namespace :rls do
       RLS.connection.execute <<~SQL
         DO $$
         BEGIN
-          CREATE ROLE "#{RLS.role}" WITH NOLOGIN;
-        EXCEPTION
-          WHEN DUPLICATE_OBJECT THEN
+          IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '#{RLS.role}') THEN
+            CREATE ROLE "#{RLS.role}" WITH NOLOGIN;
+            RAISE NOTICE 'Role "#{RLS.role}" created';
+          ELSE
             RAISE NOTICE 'Role "#{RLS.role}" already exists';
+          END IF;
         END
         $$;
 
