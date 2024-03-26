@@ -34,16 +34,9 @@ namespace :rls do
 
   task create_role: :environment do
     RLS.without_rls do
+      puts "Current database: #{RLS.connection.query_value("SELECT current_database()")}"
       RLS.connection.execute <<~SQL
-        DO $$
-        BEGIN
-          CREATE ROLE "#{RLS.role}" WITH NOLOGIN;
-        EXCEPTION
-          WHEN DUPLICATE_OBJECT THEN
-            RAISE NOTICE 'Role "#{RLS.role}" already exists';
-        END
-        $$;
-
+        CREATE ROLE "#{RLS.role}" WITH NOLOGIN;
         GRANT ALL ON ALL TABLES IN SCHEMA public TO "#{RLS.role}";
         GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO "#{RLS.role}";
         ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "#{RLS.role}";
