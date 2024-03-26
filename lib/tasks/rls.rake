@@ -19,6 +19,14 @@ Rake::Task.tasks.each do |task|
   end
 end
 
+if Rails.env.test?
+  Rake::Task["db:create"].enhance do
+    Rake::Task["rls:create_role"].invoke
+  end
+
+  Rake::Task["db:drop"].enhance(["rls:drop_role"])
+end
+
 namespace :rls do
   def connection
     @connection ||= RLS.connection
@@ -34,9 +42,16 @@ namespace :rls do
 
   task create_role: :environment do
     RLS.without_rls do
-      puts "Current database: #{RLS.connection.query_value("SELECT current_database()")}"
       RLS.connection.execute <<~SQL
-        CREATE ROLE "#{RLS.role}" WITH NOLOGIN;
+        DO $$
+        BEGIN
+          CREATE ROLE "#{RLS.role}" WITH NOLOGIN;
+        EXCEPTION
+          WHEN DUPLICATE_OBJECT THEN
+            RAISE NOTICE 'Role "#{RLS.role}" already exists';
+        END
+        $$;
+
         GRANT ALL ON ALL TABLES IN SCHEMA public TO "#{RLS.role}";
         GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO "#{RLS.role}";
         ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "#{RLS.role}";
