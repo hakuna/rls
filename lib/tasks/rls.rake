@@ -36,7 +36,7 @@ namespace :rls do
     RLS.without_rls do
       # Make sure query can be executed even if database in database.yml is not around yet
       ActiveRecord::Base.configurations.configs_for(env_name: Rails.env).each do |config|
-        config = config.configuration_hash.merge(database: 'postgres', schema_search_path: 'public')
+        config = config.configuration_hash.merge(database: "postgres", schema_search_path: "public")
         ActiveRecord::Base.establish_connection(config)
 
         ActiveRecord::Base.connection.execute <<~SQL
@@ -66,7 +66,7 @@ namespace :rls do
     RLS.without_rls do
       # Make sure query can be executed even if database in database.yml is not around yet
       ActiveRecord::Base.configurations.configs_for(env_name: Rails.env).each do |config|
-        config = config.configuration_hash.merge(database: 'postgres', schema_search_path: 'public')
+        config = config.configuration_hash.merge(database: "postgres", schema_search_path: "public")
         ActiveRecord::Base.establish_connection(config)
 
         ActiveRecord::Base.connection.execute <<~SQL
