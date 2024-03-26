@@ -34,21 +34,29 @@ namespace :rls do
 
   task create_role: :environment do
     RLS.without_rls do
-      RLS.connection.execute <<~SQL
-        DO $$
-        BEGIN
-          CREATE ROLE "#{RLS.role}" WITH NOLOGIN;
-        EXCEPTION
-          WHEN DUPLICATE_OBJECT THEN
-            RAISE NOTICE 'Role "#{RLS.role}" already exists';
-        END
-        $$;
+      # Make sure query can be executed even if database in database.yml is not around yet
+      ActiveRecord::Base.configurations.configs_for(env_name: Rails.env).each do |config|
+        config = config.configuration_hash.merge(database: 'postgres', schema_search_path: 'public')
+        ActiveRecord::Base.establish_connection(config)
 
-        GRANT ALL ON ALL TABLES IN SCHEMA public TO "#{RLS.role}";
-        GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO "#{RLS.role}";
-        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "#{RLS.role}";
-        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "#{RLS.role}";
-      SQL
+        ActiveRecord::Base.connection.execute <<~SQL
+          DO $$
+          BEGIN
+            CREATE ROLE "#{RLS.role}" WITH NOLOGIN;
+          EXCEPTION
+            WHEN DUPLICATE_OBJECT THEN
+              RAISE NOTICE 'Role "#{RLS.role}" already exists';
+          END
+          $$;
+
+          GRANT ALL ON ALL TABLES IN SCHEMA public TO "#{RLS.role}";
+          GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO "#{RLS.role}";
+          ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "#{RLS.role}";
+          ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "#{RLS.role}";
+        SQL
+
+        ActiveRecord::Base.connection.disconnect!
+      end
 
       puts "Role #{RLS.role} created"
     end
@@ -56,14 +64,22 @@ namespace :rls do
 
   task drop_role: :environment do
     RLS.without_rls do
-      RLS.connection.execute <<~SQL
-        ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM "#{RLS.role}";
-        ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON SEQUENCES FROM "#{RLS.role}";
-        REVOKE ALL ON ALL TABLES IN SCHEMA public FROM "#{RLS.role}";
-        REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM "#{RLS.role}";
-        DROP OWNED BY "#{RLS.role}";
-        DROP ROLE "#{RLS.role}";
-      SQL
+      # Make sure query can be executed even if database in database.yml is not around yet
+      ActiveRecord::Base.configurations.configs_for(env_name: Rails.env).each do |config|
+        config = config.configuration_hash.merge(database: 'postgres', schema_search_path: 'public')
+        ActiveRecord::Base.establish_connection(config)
+
+        ActiveRecord::Base.connection.execute <<~SQL
+          ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM "#{RLS.role}";
+          ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON SEQUENCES FROM "#{RLS.role}";
+          REVOKE ALL ON ALL TABLES IN SCHEMA public FROM "#{RLS.role}";
+          REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM "#{RLS.role}";
+          DROP OWNED BY "#{RLS.role}";
+          DROP ROLE "#{RLS.role}";
+        SQL
+
+        ActiveRecord::Base.connection.disconnect!
+      end
 
       puts "Role #{RLS.role} dropped"
     end
