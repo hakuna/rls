@@ -33,44 +33,40 @@ namespace :rls do
   end
 
   task create_role: :environment do
-    RLS.disable!
+    RLS.without_rls do
+      RLS.connection.execute <<~SQL
+        DO $$
+        BEGIN
+          CREATE ROLE "#{RLS.role}" WITH NOLOGIN;
+        EXCEPTION
+          WHEN DUPLICATE_OBJECT THEN
+            RAISE NOTICE 'Role "#{RLS.role}" already exists';
+        END
+        $$;
 
-    RLS.connection.execute <<~SQL
-      DO $$
-      BEGIN
-        CREATE ROLE "#{RLS.role}" WITH NOLOGIN;
-      EXCEPTION
-        WHEN DUPLICATE_OBJECT THEN
-          RAISE NOTICE 'Role "#{RLS.role}" already exists';
-      END
-      $$;
+        GRANT ALL ON ALL TABLES IN SCHEMA public TO "#{RLS.role}";
+        GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO "#{RLS.role}";
+        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "#{RLS.role}";
+        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "#{RLS.role}";
+      SQL
 
-      GRANT ALL ON ALL TABLES IN SCHEMA public TO "#{RLS.role}";
-      GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO "#{RLS.role}";
-      ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "#{RLS.role}";
-      ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "#{RLS.role}";
-    SQL
-
-    puts "Role #{RLS.role} created"
-
-    RLS.enable!
+      puts "Role #{RLS.role} created"
+    end
   end
 
   task drop_role: :environment do
-    RLS.disable!
+    RLS.without_rls do
+      RLS.connection.execute <<~SQL
+        ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM "#{RLS.role}";
+        ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON SEQUENCES FROM "#{RLS.role}";
+        REVOKE ALL ON ALL TABLES IN SCHEMA public FROM "#{RLS.role}";
+        REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM "#{RLS.role}";
+        DROP OWNED BY "#{RLS.role}";
+        DROP ROLE "#{RLS.role}";
+      SQL
 
-    RLS.connection.execute <<~SQL
-      ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM "#{RLS.role}";
-      ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON SEQUENCES FROM "#{RLS.role}";
-      REVOKE ALL ON ALL TABLES IN SCHEMA public FROM "#{RLS.role}";
-      REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM "#{RLS.role}";
-      DROP OWNED BY "#{RLS.role}";
-      DROP ROLE "#{RLS.role}";
-    SQL
-
-    puts "Role #{RLS.role} dropped"
-
-    RLS.enable!
+      puts "Role #{RLS.role} dropped"
+    end
   end
 
 end

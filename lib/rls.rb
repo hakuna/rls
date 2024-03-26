@@ -26,22 +26,23 @@ module RLS
       configuration.role
     end
 
-    def admin=(admin)
-      RLS::Current.admin = admin
-    end
-
-    def admin
-      !!RLS::Current.admin
-    end
-
     def enable!
-      self.admin = false
+      RLS::Current.admin = false
       ActiveRecord::Base.connection_pool.disconnect!
     end
 
     def disable!
-      self.admin = true
+      RLS::Current.admin = true
       ActiveRecord::Base.connection_pool.disconnect!
+    end
+
+    def without_rls(&block)
+      raise "Please supply block" unless block_given?
+
+      disable!
+      block.call
+    ensure
+      enable!
     end
 
     def process(tenant_id, &block)
