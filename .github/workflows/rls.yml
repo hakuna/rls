@@ -39,6 +39,7 @@ jobs:
       - name: Setup database
         working-directory: ./spec/dummy
         run: |
+          bundle exec rake db:create
           bundle exec rake rls:create_role
           bundle exec rake db:prepare
 
