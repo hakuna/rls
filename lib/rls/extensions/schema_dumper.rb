@@ -7,7 +7,7 @@ module RLS
         sql = <<~SQL
           SELECT policyname, tablename, cmd, permissive, roles, qual, with_check
             FROM pg_policies
-            WHERE schemaname = 'public'
+            WHERE schemaname = 'public' AND qual LIKE '%rls.tenant_id%'
             ORDER BY tablename
         SQL
 
