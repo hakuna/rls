@@ -14,16 +14,16 @@ RSpec.describe RLS do
   describe "#enable!" do
     subject { -> { described_class.enable! } }
 
-    before { RLS::Current.admin = true }
+    before { Thread.current[:rls_admin] = true }
 
-    specify { expect { subject.call }.to change(RLS::Current, :admin).from(true).to(false) }
+    specify { expect { subject.call }.to change { Thread.current[:rls_admin] }.from(true).to(false) }
     specify { expect(ActiveRecord::Base.connection_pool).to receive(:disconnect!); subject.call }
   end
 
   describe "#disable!" do
     subject { -> { described_class.disable! } }
 
-    specify { expect { subject.call }.to change(RLS::Current, :admin).from(false).to(true) }
+    specify { expect { subject.call }.to change { Thread.current[:rls_admin] }.from(false).to(true) }
     specify { expect(ActiveRecord::Base.connection_pool).to receive(:disconnect!); subject.call }
   end
 

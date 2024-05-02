@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require_relative "rls/current"
 require_relative "rls/migration"
 require_relative "rls/railtie"
 require_relative "rls/version"
@@ -27,12 +26,12 @@ module RLS
     end
 
     def enable!
-      RLS::Current.admin = false
+      Thread.current[:rls_admin] = false
       ActiveRecord::Base.connection_pool.disconnect!
     end
 
     def disable!
-      RLS::Current.admin = true
+      Thread.current[:rls_admin] = true
       ActiveRecord::Base.connection_pool.disconnect!
     end
 

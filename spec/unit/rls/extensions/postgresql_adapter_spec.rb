@@ -28,7 +28,7 @@ RSpec.describe RLS::Extensions::PostgreSQLAdapter do
     end
 
     context "when admin" do
-      before { RLS::Current.admin = true }
+      before { Thread.current[:rls_admin] = true }
 
       it "does not set the role" do
         expect_any_instance_of(MyAdapter).not_to receive(:execute).with("SET ROLE 'dummy_rls_test'")

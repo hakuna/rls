@@ -8,7 +8,7 @@ module RLS
 
       def initialize(...)
         super
-        execute(format(SET_ROLE_SQL, quote(RLS.role))) unless RLS::Current.admin
+        execute(format(SET_ROLE_SQL, quote(RLS.role))) unless Thread.current[:rls_admin]
       end
 
       def rls_set(tenant_id:)
