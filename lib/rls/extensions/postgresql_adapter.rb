@@ -6,7 +6,8 @@ module RLS
       SET_TENANT_ID_SQL = "SET rls.tenant_id = %s".freeze
       RESET_TENANT_ID_SQL = "RESET rls.tenant_id".freeze
 
-      def initialize(...)
+      def configure_connection
+        # new or re-establishing connection
         super
         execute(format(SET_ROLE_SQL, quote(RLS.role))) unless Thread.current[:rls_admin]
       end

@@ -14,6 +14,10 @@ RSpec.describe RLS::Extensions::PostgreSQLAdapter do
       str
     end
 
+    def configure_connection
+      # noop
+    end
+
     def clear_query_cache
       nil
     end
@@ -21,10 +25,10 @@ RSpec.describe RLS::Extensions::PostgreSQLAdapter do
 
   let(:connection) { MyAdapter.new }
 
-  describe "#initialize" do
+  describe "#configure_connection" do
     it "sets the role" do
       expect_any_instance_of(MyAdapter).to receive(:execute).with("SET ROLE 'dummy_rls_test'")
-      connection # initialize
+      connection.configure_connection
     end
 
     context "when admin" do
