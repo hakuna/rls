@@ -42,40 +42,48 @@ namespace :rls do
 
   task create_role: :environment do
     RLS.without_rls do
-      RLS.connection.execute <<~SQL
-        DO $$
-        BEGIN
-          IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '#{RLS.role}') THEN
-            CREATE ROLE "#{RLS.role}" WITH NOLOGIN;
-            RAISE NOTICE 'Role "#{RLS.role}" created';
-          ELSE
-            RAISE NOTICE 'Role "#{RLS.role}" already exists';
-          END IF;
-        END
-        $$;
+      ActiveRecord::Base.configurations.configs_for(env_name: Rails.env).each do |db_config|
+        ActiveRecord::Tasks::DatabaseTasks.with_temporary_connection(db_config) do |connection|
+          connection.execute <<~SQL
+            DO $$
+            BEGIN
+              IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = '#{RLS.role}') THEN
+                CREATE ROLE "#{RLS.role}" WITH NOLOGIN;
+                RAISE NOTICE 'Role "#{RLS.role}" created';
+              ELSE
+                RAISE NOTICE 'Role "#{RLS.role}" already exists';
+              END IF;
+            END
+            $$;
 
-        GRANT ALL ON ALL TABLES IN SCHEMA public TO "#{RLS.role}";
-        GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO "#{RLS.role}";
-        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "#{RLS.role}";
-        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "#{RLS.role}";
-      SQL
+            GRANT ALL ON ALL TABLES IN SCHEMA public TO "#{RLS.role}";
+            GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO "#{RLS.role}";
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO "#{RLS.role}";
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO "#{RLS.role}";
+          SQL
 
-      puts "Role #{RLS.role} created"
+          puts "Role #{RLS.role} created"
+        end
+      end
     end
   end
 
   task drop_role: :environment do
     RLS.without_rls do
-      RLS.connection.execute <<~SQL
-        ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM "#{RLS.role}";
-        ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON SEQUENCES FROM "#{RLS.role}";
-        REVOKE ALL ON ALL TABLES IN SCHEMA public FROM "#{RLS.role}";
-        REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM "#{RLS.role}";
-        DROP OWNED BY "#{RLS.role}";
-        DROP ROLE "#{RLS.role}";
-      SQL
+      ActiveRecord::Base.configurations.configs_for(env_name: Rails.env).each do |db_config|
+        ActiveRecord::Tasks::DatabaseTasks.with_temporary_connection(db_config) do |connection|
+          connection.execute <<~SQL
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM "#{RLS.role}";
+            ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON SEQUENCES FROM "#{RLS.role}";
+            REVOKE ALL ON ALL TABLES IN SCHEMA public FROM "#{RLS.role}";
+            REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM "#{RLS.role}";
+            DROP OWNED BY "#{RLS.role}";
+            DROP ROLE "#{RLS.role}";
+          SQL
 
-      puts "Role #{RLS.role} dropped"
+          puts "Role #{RLS.role} dropped"
+        end
+      end
     end
   end
 
